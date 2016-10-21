@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"github.com/jacobsa/go-serial/serial"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 )
 
 type Message struct {
-	Name   string
-	Body   string
+	Temp   float64
 	Hour   int64
 	Second int64
 }
@@ -36,21 +37,24 @@ func main() {
 	defer port.Close()
 
 	// Read from port
-	temp := make([]byte, 5)
+	temp_raw := make([]byte, 5)
 	for counter := 0; counter < 10; counter++ {
-		_, err1 := port.Read(temp)
+		n, err1 := port.Read(temp_raw)
 		if err1 != nil {
 			log.Fatalf("port.Read: %v", err1)
 		}
 
+		//Converting temperature-reading from array to string to float
+		temp_string := strings.TrimSpace(string(temp_raw[:n]))
+		temp, _ := strconv.ParseFloat(temp_string, 64)
+
 		//Adding timestamp
 		now := time.Now()
 		fmt.Printf("%v:%v.%v   ", now.Hour(), now.Minute(), now.Second())
-		//fmt.Println("Read", n, "bytes.") // From port.Read
-		fmt.Printf("%s ºC\n", temp)
+		fmt.Printf("%v ºC\n", temp)
 
-		//Prepering the message and encoding it to JSON
-		m_in := Message{"Temperature", string(temp), int64(now.Minute()), int64(now.Second())}
+		//Preparing the message and encoding it to JSON
+		m_in := Message{temp, int64(now.Minute()), int64(now.Second())}
 
 		m_encoded, err2 := json.Marshal(m_in)
 		if err2 != nil {
