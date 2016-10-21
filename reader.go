@@ -43,24 +43,29 @@ func main() {
 			log.Fatalf("port.Read: %v", err1)
 		}
 
+		//Adding timestamp
 		now := time.Now()
 		fmt.Printf("%v:%v.%v   ", now.Hour(), now.Minute(), now.Second())
 		//fmt.Println("Read", n, "bytes.") // From port.Read
 		fmt.Printf("%s ºC\n", temp)
 
+		//Making a message and encoding to JSON
 		m_in := Message{"Temperature", string(temp), int64(now.Minute()), int64(now.Second())}
-		var m_out Message
 
 		m_encoded, err2 := json.Marshal(m_in)
 		if err2 != nil {
 			log.Fatalf("json.Marshal: %v", err2)
 		}
 
+		//Testing by decoding the same message
+		var m_out Message
+
 		err3 := json.Unmarshal(m_encoded, &m_out)
 		if err3 != nil {
 			log.Fatalf("json.Unmarshal: %v", err3)
 		}
 
+		//Printing both messages, making sure they are equal
 		fmt.Println(m_in)
 		fmt.Println(m_out)
 	}
