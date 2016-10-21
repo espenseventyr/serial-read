@@ -37,7 +37,7 @@ func main() {
 
 	// Read from port
 	temp := make([]byte, 5)
-	for counter := 0; counter < 50; counter++ {
+	for counter := 0; counter < 10; counter++ {
 		_, err1 := port.Read(temp)
 		if err1 != nil {
 			log.Fatalf("port.Read: %v", err1)
