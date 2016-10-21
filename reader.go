@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/go-serial/serial"
 	"log"
+	"time"
 )
 
 func main() {
@@ -29,16 +30,14 @@ func main() {
 	// Read from port
 	b := make([]byte, 5)
 	for counter := 0; counter < 10; counter++ {
-		n, err := port.Read(b)
+		_, err := port.Read(b)
 		if err != nil {
 			log.Fatalf("port.Read: %v", err)
 		}
 
-		fmt.Println("Read", n, "bytes.")
-		//fmt.Println(b)
-		//fmt.Println("Printf with % x:")
-		//fmt.Printf("% x\n", b)
-		fmt.Println("Printf with %q:")
-		fmt.Printf("%q\n", b)
+		now := time.Now()
+		fmt.Printf("%v:%v.%v   ", now.Hour(), now.Minute(), now.Second())
+		//fmt.Println("Read", n, "bytes.") // From port.Read
+		fmt.Printf("%s ºC\n", b)
 	}
 }
