@@ -49,7 +49,7 @@ func main() {
 		//fmt.Println("Read", n, "bytes.") // From port.Read
 		fmt.Printf("%s ºC\n", temp)
 
-		//Making a message and encoding to JSON
+		//Prepering the message and encoding it to JSON
 		m_in := Message{"Temperature", string(temp), int64(now.Minute()), int64(now.Second())}
 
 		m_encoded, err2 := json.Marshal(m_in)
@@ -65,7 +65,7 @@ func main() {
 			log.Fatalf("json.Unmarshal: %v", err3)
 		}
 
-		//Printing both messages, making sure they are equal
+		//Test output
 		fmt.Println(m_in)
 		fmt.Println(m_out)
 	}
