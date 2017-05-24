@@ -21,10 +21,10 @@ func main() {
 	options_serial := serial.OpenOptions{
 		PortName:              "/dev/cu.usbmodem1411",
 		BaudRate:              9600,
-		DataBits:              5,
+		DataBits:              6,
 		StopBits:              1,
 		InterCharacterTimeout: 200,
-		MinimumReadSize:       5,
+		MinimumReadSize:       7,
 	}
 
 	options_statsd := Opt_statsd{
@@ -52,7 +52,7 @@ func main() {
 	defer client.Close()
 
 	// Read from sensor
-	temp_raw := make([]byte, 6)
+	temp_raw := make([]byte, 7)
 	for {
 		n, err1 := port.Read(temp_raw)
 		if err1 != nil {
