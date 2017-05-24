@@ -1,44 +1,59 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/jacobsa/go-serial/serial"
+	"gopkg.in/alexcesaro/statsd.v2"
 	"log"
 	"strconv"
 	"strings"
-	"time"
+	//"time"
 )
 
-type Message struct {
-	Temp   float64
-	Hour   int64
-	Second int64
+type Opt_statsd struct {
+	Address     statsd.Option
+	Network     statsd.Option
+	FlushPeriod statsd.Option
 }
 
 func main() {
 
-	options := serial.OpenOptions{
+	options_serial := serial.OpenOptions{
 		PortName:              "/dev/cu.usbmodem1411",
 		BaudRate:              9600,
-		DataBits:              8,
+		DataBits:              5,
 		StopBits:              1,
 		InterCharacterTimeout: 200,
-		MinimumReadSize:       6,
+		MinimumReadSize:       5,
 	}
 
-	// Open the port
-	port, err := serial.Open(options)
+	options_statsd := Opt_statsd{
+		Address:     statsd.Address("localhost:8125"),
+		Network:     statsd.Network("udp"),
+		FlushPeriod: statsd.FlushPeriod(100),
+	}
+
+	// Open port serial (to receive data from the sensor)
+	port, err := serial.Open(options_serial)
 	if err != nil {
 		log.Fatalf("serial.Open: %v", err)
 	}
 
-	// Make sure to close the port later
-	defer port.Close()
+	// Connect to statsd (to send data)
+	client, err := statsd.New(options_statsd.Address,
+		options_statsd.Network,
+		options_statsd.FlushPeriod)
+	if err != nil {
+		log.Fatalf("statsd.New: %v", err)
+	}
 
-	// Read from port
-	temp_raw := make([]byte, 5)
-	for counter := 0; counter < 10; counter++ {
+	// Make sure to close the ports later
+	defer port.Close()
+	defer client.Close()
+
+	// Read from sensor
+	temp_raw := make([]byte, 6)
+	for {
 		n, err1 := port.Read(temp_raw)
 		if err1 != nil {
 			log.Fatalf("port.Read: %v", err1)
@@ -46,30 +61,19 @@ func main() {
 
 		//Converting temperature-reading from array to string to float
 		temp_string := strings.TrimSpace(string(temp_raw[:n]))
-		temp, _ := strconv.ParseFloat(temp_string, 64)
+		temp_float, _ := strconv.ParseFloat(temp_string, 64)
 
 		//Adding timestamp
-		now := time.Now()
+		//now := time.Now()
 
-		//Preparing the message and encoding it to JSON
-		m_in := Message{temp, int64(now.Minute()), int64(now.Second())}
+		// Til senere?: gjøre omregning fra sensordata til celsius her rett før
+		// det sendes videre til statsd.
 
-		m_encoded, err2 := json.Marshal(m_in)
-		if err2 != nil {
-			log.Fatalf("json.Marshal: %v", err2)
-		}
+		//Sending to statd
+		client.Gauge("temperature", temp_float)
 
-		//Testing by decoding the same message
-		var m_out Message
-
-		err3 := json.Unmarshal(m_encoded, &m_out)
-		if err3 != nil {
-			log.Fatalf("json.Unmarshal: %v", err3)
-		}
-
-		//Test output
-		fmt.Printf("%v:%v.%v   ", now.Hour(), now.Minute(), now.Second())
-		fmt.Printf("%v ºC\n", temp)
-		fmt.Printf("%v\n%v\n", m_in, m_out)
+		//Console output
+		fmt.Printf("temperature: %v\n", temp_float)
 	}
+
 }
